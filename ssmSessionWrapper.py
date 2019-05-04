@@ -84,6 +84,8 @@ def get_user_choice(instances):
 def connect_by_ssm(session, instance_id):
     ''' Run ssm client on the given instance id '''
     print(f"Connecting to {instance_id}")
+    if DEBUG:
+        print ("[DEBUG] Running ssm sessiom-manager-plugin")
     client = session.client('ssm')
     response = client.start_session( Target=instance_id)
     endpoint_url = client.meta.endpoint_url
