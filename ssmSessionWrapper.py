@@ -48,6 +48,17 @@ def get_instances_by_state(ec2, state):
         raise Exception()
     return res
 
+def get_instances_managed_by_ssm(ssm):
+    ''' Return ec2 instances managed by ssm '''
+    if DEBUG:
+        print ("[DEBUG] Running ssm describe_instance_information")
+    try:
+        res = ssm.describe_instance_information()
+    except ClientError as err:
+        print (f"[Err] {err}")
+        raise Exception()
+    return res
+
 def find_InstanceName(tags):
     ''' Return the value of the Tag Name '''
     name = ""
@@ -56,23 +67,44 @@ def find_InstanceName(tags):
             name = tag['Value']
     return name
 
-def build_instance_list(descr_instances_output):
+def merge_lists(l1, l2, key):
+  merged = {}
+  for item in l1+l2:
+    if item[key] in merged:
+      merged[item[key]].update(item)
+    else:
+      merged[item[key]] = item
+  return [val for (_, val) in merged.items()]
+
+def build_instance_list(descr_instances_output, ssm_attributes):
     ''' Return a list of dictionaries {name: instanceName, id: instanceId} '''
     if DEBUG:
         print ("[DEBUG] Create instance list")
+    ssm = []
+    for instance in ssm_attributes['InstanceInformationList']:
+        instanceId = instance['InstanceId']
+        pingStatus = instance['PingStatus']
+        ssm.append({'id': instanceId, 'status': pingStatus})
+    if DEBUG:
+        print (f"[DEBUG] SSM instances: {ssm}")
+    if not ssm:
+        raise Exception("No SSM Managed instance found.")
     instances=[]
     for item in descr_instances_output:
         instanceId = item['Instances'][0]['InstanceId']
         instanceName = find_InstanceName(item['Instances'][0]['Tags'])
         instances.append({'name': instanceName, 'id': instanceId})
-    return instances
+    if DEBUG:
+        print (f"[DEBUG] EC2 Running instances: {instances}")
+    res = merge_lists(instances, ssm, 'id')
+    return res
 
 def get_user_choice(instances):
     ''' Print instances on screen and asks user which one 
         she/he wants to connect to '''
     print ("List of running instances:")
     for idx,instance in enumerate(instances):
-        print (f"[{idx}]: {instance['name']} - {instance['id']}")
+        print (f"[{idx}]: {instance['name']} - {instance['id']} - {instance['status']}")
     inumber = -1
     while inumber not in range(len(instances)):
         try:
@@ -81,13 +113,12 @@ def get_user_choice(instances):
             print (f"[ERR] The selection must be a number between 0 and {len(instances)-1}")
     return inumber
 
-def connect_by_ssm(session, instance_id):
+def connect_by_ssm(client, instance_id):
     ''' Run ssm client on the given instance id '''
     print(f"Connecting to {instance_id}")
     if DEBUG:
         print ("[DEBUG] Running ssm sessiom-manager-plugin")
-    client = session.client('ssm')
-    response = client.start_session( Target=instance_id)
+    response = client.start_session(Target=instance_id)
     endpoint_url = client.meta.endpoint_url
     region_name = client.meta.region_name
     global PROFILE
@@ -150,17 +181,22 @@ def main():
     # init AWS session
     session = init_aws_session()
     ec2 = None
+    ssm = None
     try:
         if DEBUG:
             print ("[DEBUG] Create EC2 Client")
         ec2 = session.client('ec2')
+        if DEBUG:
+            print ("[DEBUG] Create SSM Client")
+        ssm = session.client('ssm')
     except NoRegionError:
         print ("[Err] No region specified")
         raise Exception("Unable To continue")
     running_instances_attr = get_instances_by_state(ec2, 'running') 
-    instances = build_instance_list(running_instances_attr['Reservations'])
+    instances_managed_by_ssm = get_instances_managed_by_ssm(ssm)
+    instances = build_instance_list(running_instances_attr['Reservations'], instances_managed_by_ssm)
     inumber = int(get_user_choice(instances))
-    connect_by_ssm(session, instances[inumber]['id'])
+    connect_by_ssm(ssm, instances[inumber]['id'])
 
 
 try:
