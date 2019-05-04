@@ -25,6 +25,7 @@
 import sys
 import boto3
 import argparse
+import signal
 import pprint
 import subprocess
 from botocore.exceptions import ProfileNotFound,NoRegionError,ClientError 
@@ -88,6 +89,9 @@ def connect_by_ssm(instance_id):
     ssm_command = ["aws", "ssm", "start-session", "--target", instance_id]
     if PROFILE:
        ssm_command.extend(['--profile', PROFILE])
+    # ignore SIGINT since we don't want sigint to terminate this script during the
+    # ssm session
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     subprocess.call(ssm_command)
 
 def parse_arguments():
