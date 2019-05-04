@@ -26,7 +26,6 @@ import sys
 import boto3
 import argparse
 import signal
-import pprint
 import subprocess
 from botocore.exceptions import ProfileNotFound,NoRegionError,ClientError 
 
@@ -61,8 +60,6 @@ def build_instance_list(descr_instances_output):
     if DEBUG:
         print ("[DEBUG] Create instance list")
     instances=[]
-    if DEBUG:
-        pp.pprint(descr_instances_output)
     for item in descr_instances_output:
         instanceId = item['Instances'][0]['InstanceId']
         instanceName = find_InstanceName(item['Instances'][0]['Tags'])
@@ -156,8 +153,6 @@ def main():
 try:
 
     if __name__ == "__main__":
-        if DEBUG:
-            pp = pprint.PrettyPrinter(indent=1)
         main()
 
 except KeyboardInterrupt:
