@@ -104,7 +104,10 @@ def get_user_choice(instances):
         she/he wants to connect to '''
     print ("List of running instances:")
     for idx,instance in enumerate(instances):
-        print (f"[{idx}]: {instance['name']} - {instance['id']} - {instance['status']}")
+        try:
+            print (f"[{idx}]: {instance['name']} - {instance['id']} - {instance['status']}")
+        except:
+            print (f"[{idx}]: {instance['name']} - {instance['id']} - Error: SSM Agent not installed?")
     inumber = -1
     while inumber not in range(len(instances)):
         try:
