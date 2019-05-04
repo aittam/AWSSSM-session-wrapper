@@ -27,6 +27,7 @@ import boto3
 import argparse
 import signal
 import subprocess
+import json
 from botocore.exceptions import ProfileNotFound,NoRegionError,ClientError 
 
 DEBUG=False
@@ -80,16 +81,26 @@ def get_user_choice(instances):
             print (f"[ERR] The selection must be a number between 0 and {len(instances)-1}")
     return inumber
 
-def connect_by_ssm(instance_id):
+def connect_by_ssm(session, instance_id):
     ''' Run ssm client on the given instance id '''
     print(f"Connecting to {instance_id}")
-    ssm_command = ["aws", "ssm", "start-session", "--target", instance_id]
-    if PROFILE:
-       ssm_command.extend(['--profile', PROFILE])
+    client = session.client('ssm')
+    response = client.start_session( Target=instance_id)
+    endpoint_url = client.meta.endpoint_url
+    region_name = client.meta.region_name
+    global PROFILE
+    if not PROFILE:
+        PROFILE=''
     # ignore SIGINT since we don't want sigint to terminate this script during the
     # ssm session
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    subprocess.call(ssm_command)
+    subprocess.check_call(["session-manager-plugin",
+                json.dumps(response),
+                region_name,
+                "StartSession",
+                PROFILE,
+                json.dumps({'Target': instance_id}),
+                endpoint_url])
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -147,7 +158,7 @@ def main():
     running_instances_attr = get_instances_by_state(ec2, 'running') 
     instances = build_instance_list(running_instances_attr['Reservations'])
     inumber = int(get_user_choice(instances))
-    connect_by_ssm(instances[inumber]['id'])
+    connect_by_ssm(session, instances[inumber]['id'])
 
 
 try:
