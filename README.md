@@ -24,8 +24,8 @@ You can optionally provide a profile as a command line argument, use the default
 ```bash
 python3 ./ssmSessionWrapper.py --profile my-profile-dev
 List of running instances:
-[0]: linux-test1 - i-06bc4b6ce3c3c18e5
-[1]: linux-test2 - i-01dc627cbfe388d77
+[0]: linux-test1 - i-06bc4b6ce3c3c18e5 - Online
+[1]: linux-test2 - i-01dc627cbfe388d77 - Online
 Type the number of the instance you want to connect to: 1
 Connecting to i-01dc627cbfe388d77
 
@@ -40,9 +40,9 @@ export AWS_PROFILE=my-profile-stg
 python3 ./ssmSessionWrapper.py --region eu-west-1
 Enter MFA code for arn:aws:iam::123456789:mfa/name.surname:
 List of running instances:
-[0]: linux-test1 - i-02bz4b6de4c3c18f3
-[1]: linux-test2 - i-03dc727cbfe388dd4
-[3]: linux-test3 - i-07gc763cffe368df5
+[0]: linux-test1 - i-02bz4b6de4c3c18f3 - Online
+[1]: linux-test2 - i-03dc727cbfe388dd4 - Online
+[3]: linux-test3 - i-07gc763cffe368df5 - ConnectionLost
 Type the number of the instance you want to connect to: 0
 ```
 
