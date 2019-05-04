@@ -96,13 +96,16 @@ def connect_by_ssm(instance_id):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile", dest='profile', help="AWS profile")
-    parser.add_argument("--region", dest='region', help="AWS region")
+    parser.add_argument("-p","--profile", dest='profile', help="AWS profile")
+    parser.add_argument("-r","--region", dest='region', help="AWS region")
+    parser.add_argument("-d","--debug", dest='debug', action="store_true", help="Print debug informations")
     args = parser.parse_args()
     global PROFILE
     PROFILE = args.profile
     global REGION
     REGION = args.region
+    global DEBUG
+    DEBUG = args.debug
     if PROFILE is None:
         print ("[INFO] No profile given, using standard authentication chain")
 
