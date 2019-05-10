@@ -61,7 +61,7 @@ def get_instances_managed_by_ssm(ssm):
 
 def find_InstanceName(tags):
     ''' Return the value of the Tag Name '''
-    name = ""
+    name = "Name Not Found"
     for tag in tags:
         if tag['Key'] == 'Name':
             name = tag['Value']
@@ -92,7 +92,9 @@ def build_instance_list(descr_instances_output, ssm_attributes):
     instances=[]
     for item in descr_instances_output:
         instanceId = item['Instances'][0]['InstanceId']
-        instanceName = find_InstanceName(item['Instances'][0]['Tags'])
+        instanceName = "Unknown Name"
+        if 'Tags' in item['Instances'][0].keys():
+            instanceName = find_InstanceName(item['Instances'][0]['Tags'])
         instances.append({'name': instanceName, 'id': instanceId})
     if DEBUG:
         print (f"[DEBUG] EC2 Running instances: {instances}")
